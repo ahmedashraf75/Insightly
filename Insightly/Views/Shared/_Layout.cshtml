@@ -1,0 +1,589 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Insightly</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/icon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/icon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/icon.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="~/icon.png?v=2" />
+    <link rel="shortcut icon" type="image/png" href="~/icon.png?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/icon.png?v=2" />
+
+    <style>
+        body {
+            background: #f8f9fb
+        }
+
+        .pointer {
+            cursor: pointer
+        }
+
+        .tag {
+            background: #eef2ff;
+            border-radius: 999px;
+            padding: .125rem .5rem;
+            font-size: .8rem;
+            margin-right: .25rem
+        }
+
+        .ellipsis {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .nav-link.active {
+            font-weight: 600
+        }
+
+        .card-hover:hover {
+            box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,.08);
+            transform: translateY(-1px);
+            transition: .2s
+        }
+
+        .toast-container {
+            z-index: 2000
+        }
+
+        .logo {
+            max-height: 50px;
+            width: auto;
+            display: block;
+        }
+
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .article-item {
+            transition: all 0.3s ease;
+        }
+
+        .read-article-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .read-article-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+            transform: translateY(-2px);
+        }
+
+        .read-status-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+    </style>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top py-0" style="--bs-border-color:#e9ecef;">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-decoration-none me-2 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Open menu">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <a class="navbar-brand fw-bold p-0 m-0 d-flex align-items-center" asp-controller="Home" asp-action="Index" style="line-height:0;">
+                <img src="~/images/logo.png" alt="Insightly" class="logo" />
+                </a>
+            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="nav">
+                
+
+                <!-- Search Form (center like Reddit) -->
+                <form class="d-flex flex-grow-1 me-lg-3 my-2 my-lg-0" role="search" onsubmit="return false;">
+                    <div class="input-group w-100">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input class="form-control border-start-0" type="search" id="searchInput" placeholder="Search Insightly" aria-label="Search">
+                        <button class="btn btn-outline-primary d-none d-sm-inline" type="button" id="searchButton">Search</button>
+                    </div>
+                </form>
+
+                <div class="d-flex align-items-center gap-2 ms-lg-2 my-2 my-lg-0">
+                    @await Html.PartialAsync("_LoginPartial")
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar (mobile offcanvas) -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">Menu</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+                    <nav class="list-group list-group-flush">
+                        <a class="list-group-item list-group-item-action" asp-controller="Home" asp-action="Index"><i class="bi bi-house me-2"></i>Home</a>
+                        <a class="list-group-item list-group-item-action" asp-controller="Articles" asp-action="FollowingArticles"><i class="bi bi-people me-2"></i>Following</a>
+                        <a class="list-group-item list-group-item-action" asp-controller="Articles" asp-action="Create"><i class="bi bi-plus-circle me-2"></i>Create Article</a>
+                        <a class="list-group-item list-group-item-action" asp-controller="Profile" asp-action="Index"><i class="bi bi-person me-2"></i>My Profile</a>
+                        <a class="list-group-item list-group-item-action" asp-controller="Articles" asp-action="SavedArticles"><i class="bi bi-bookmark me-2"></i>Saved Articles</a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="list-group-item list-group-item-action" asp-controller="Admin" asp-action="Index"><i class="bi bi-shield-lock me-2"></i>Admin</a>
+                        }
+                    </nav>
+        </div>
+    </div>
+
+    <!-- Main Container with Desktop Sidebar -->
+    <main class="container-fluid">
+        <div class="row">
+            <aside class="col-lg-3 col-xl-2 d-none d-lg-block border-end sidebar px-0">
+                <div class="p-3">
+                    <div class="text-uppercase text-muted small fw-semibold mb-2">Menu</div>
+                    <nav class="nav flex-column sidebar-nav">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index"><i class="bi bi-house me-2"></i>Home</a>
+                        <a class="nav-link" asp-controller="Articles" asp-action="FollowingArticles"><i class="bi bi-people me-2"></i>Following</a>
+                        <a class="nav-link" asp-controller="Articles" asp-action="Create"><i class="bi bi-plus-circle me-2"></i>Create Article</a>
+                        <a class="nav-link" asp-controller="Profile" asp-action="Index"><i class="bi bi-person me-2"></i>My Profile</a>
+                        <a class="nav-link" asp-controller="Articles" asp-action="SavedArticles"><i class="bi bi-bookmark me-2"></i>Saved Articles</a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a class="nav-link" asp-controller="Admin" asp-action="Index"><i class="bi bi-shield-lock me-2"></i>Admin</a>
+                        }
+                    </nav>
+                </div>
+            </aside>
+            <div class="col-lg-9 col-xl-10 py-4">
+                @RenderBody()
+            </div>
+        </div>
+    </main>
+
+    <!-- Toasts -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AJAX Search Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            let searchTimeout;
+
+            // Function to perform AJAX search
+            async function performSearch(query) {
+                try {
+                    // If query is empty, show all articles without making a server call
+                    if (!query || query.trim() === '') {
+                        showAllArticles();
+                        return;
+                    }
+                    
+                    // Add search indicator
+                    searchInput.style.borderColor = '#007bff';
+                    searchInput.style.boxShadow = '0 0 0 0.2rem rgba(0, 123, 255, 0.25)';
+                    
+                    const response = await fetch(`/Search/SearchAjax?query=${encodeURIComponent(query)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        updatePageWithSearchResults(data);
+                    }
+                    
+                    // Remove search indicator
+                    setTimeout(() => {
+                        searchInput.style.borderColor = '';
+                        searchInput.style.boxShadow = '';
+                    }, 500);
+                } catch (error) {
+                    // Remove search indicator on error
+                    searchInput.style.borderColor = '';
+                    searchInput.style.boxShadow = '';
+                }
+            }
+            
+            // Function to show all articles
+            async function showAllArticles() {
+                try {
+                    const response = await fetch('/Search/SearchAjax?query=');
+                    if (response.ok) {
+                        const data = await response.json();
+                        updatePageWithSearchResults(data);
+                    }
+                } catch (error) {
+                    // Silently handle error loading all articles
+                }
+            }
+
+            // Function to update the current page with search results
+            function updatePageWithSearchResults(data) {
+                const articlesContainer = document.getElementById('articlesContainer');
+                const noResultsMessage = document.getElementById('noResultsMessage');
+                
+                if (!articlesContainer) return;
+
+                // Update page title and header if we're on the search page
+                updateSearchPageHeader(data);
+
+                if (data.articles && data.articles.length > 0) {
+                    // Clear existing content
+                    articlesContainer.innerHTML = '';
+                    
+                    // Add search results
+                    data.articles.forEach(article => {
+                        const articleHtml = createArticleHtml(article);
+                        articlesContainer.insertAdjacentHTML('beforeend', articleHtml);
+                    });
+
+                    // Hide no results message
+                    if (noResultsMessage) {
+                        noResultsMessage.style.display = 'none';
+                    }
+
+                    // Re-attach event listeners for new content
+                    attachEventListeners();
+                    
+                    // Fetch vote counts for new articles
+                    fetchVoteCounts(data.articles);
+                    
+                    // Fetch user vote status for new articles
+                    fetchUserVoteStatus(data.articles);
+                } else {
+                    // Show no results message
+                    articlesContainer.innerHTML = '';
+                    showNoResultsMessage(data.query, data.hasQuery);
+                }
+            }
+
+            // Function to create article HTML from search results
+            function createArticleHtml(article) {
+                const contentPreview = article.content.length > 100 ? 
+                    article.content.substring(0, 100) + '...' : 
+                    article.content;
+                
+                const createdAt = new Date(article.createdAt).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+
+                // Check if we're on home page (Reddit-style) or search page (card-style)
+                const isHomePage = document.querySelector('.home-page');
+                
+                if (isHomePage) {
+                    return `
+                        <div class="post-card d-flex article-item clickable-card"
+                             data-title="${article.title.toLowerCase()}"
+                             data-content="${article.content.toLowerCase()}"
+                             data-author="${article.author.name.toLowerCase()}"
+                             data-article-url="/Articles/Details/${article.articleId}">
+                            <div class="vote-col d-flex flex-column align-items-center justify-content-start py-2">
+                                <button class="btn btn-link p-0 vote-btn upvote" data-article-id="${article.articleId}" aria-label="Upvote">
+                                    <i class="bi bi-arrow-up-circle fs-4"></i>
+                                </button>
+                                <div class="score my-1" id="score-${article.articleId}">0</div>
+                                <button class="btn btn-link p-0 vote-btn downvote" data-article-id="${article.articleId}" aria-label="Downvote">
+                                    <i class="bi bi-arrow-down-circle fs-4"></i>
+                                </button>
+                            </div>
+                            <div class="flex-grow-1 p-3">
+                                <div class="d-flex align-items-center gap-2 mb-1 text-muted small">
+                                    <span>Posted by <a href="/Profile/ViewProfile/${article.author.id}" class="text-decoration-none fw-medium" style="color: #ff4b37 !important;">${article.author.name}</a></span>
+                                    <span>•</span>
+                                    <span>${createdAt}</span>
+                                </div>
+                                <h5 class="mb-2"><a class="text-decoration-none" href="/Articles/Details/${article.articleId}">${article.title}</a></h5>
+                                <p class="mb-3 text-muted">${contentPreview}</p>
+                                <div class="d-flex align-items-center justify-content-end">
+                                    <a href="/Articles/Details/${article.articleId}" class="btn btn-sm btn-outline-primary read-more-btn">Read more</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="col-md-4 col-lg-3 article-item" 
+                             data-title="${article.title.toLowerCase()}" 
+                             data-content="${article.content.toLowerCase()}" 
+                             data-author="${article.author.name.toLowerCase()}">
+                            <div class="card h-100 card-hover clickable-card" data-article-url="/Articles/Details/${article.articleId}">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">${article.title}</h5>
+                                    <p class="card-text text-muted ellipsis">${contentPreview}</p>
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-secondary">${article.author.name}</span>
+                                        <a href="/Articles/Details/${article.articleId}" class="btn btn-sm btn-outline-primary read-more-btn">Read more</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Function to fetch vote counts for articles
+            async function fetchVoteCounts(articles) {
+                articles.forEach(async article => {
+                    try {
+                        const res = await fetch(`/Votes/Count?articleId=${article.articleId}`);
+                        if (res.ok) {
+                            const json = await res.json();
+                            const scoreEl = document.getElementById(`score-${article.articleId}`);
+                            if (scoreEl) {
+                                scoreEl.textContent = (json && typeof json.netScore !== 'undefined') ? json.netScore : 0;
+                            }
+                        }
+                    } catch (e) {
+                        // Silently handle vote count fetch errors
+                    }
+                });
+            }
+
+            // Function to fetch user vote status for articles
+            async function fetchUserVoteStatus(articles) {
+                articles.forEach(async article => {
+                    try {
+                        const res = await fetch(`/Votes/UserArticleVote?articleId=${article.articleId}`, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (res.ok) {
+                            const json = await res.json();
+                            if (json.voted) {
+                                const upvoteBtn = document.querySelector(`.upvote[data-article-id="${article.articleId}"]`);
+                                const downvoteBtn = document.querySelector(`.downvote[data-article-id="${article.articleId}"]`);
+                                if (json.isUpvote) {
+                                    if (upvoteBtn) upvoteBtn.classList.add('active-up');
+                                    if (downvoteBtn) downvoteBtn.classList.remove('active-down');
+                                } else {
+                                    if (downvoteBtn) downvoteBtn.classList.add('active-down');
+                                    if (upvoteBtn) upvoteBtn.classList.remove('active-up');
+                                }
+                            } else {
+                                // Remove any existing active classes if user hasn't voted
+                                const upvoteBtn = document.querySelector(`.upvote[data-article-id="${article.articleId}"]`);
+                                const downvoteBtn = document.querySelector(`.downvote[data-article-id="${article.articleId}"]`);
+                                if (upvoteBtn) upvoteBtn.classList.remove('active-up');
+                                if (downvoteBtn) downvoteBtn.classList.remove('active-down');
+                            }
+                        }
+                    } catch (e) {
+                        // Silently handle errors
+                    }
+                });
+            }
+
+            // Function to update search page header
+            function updateSearchPageHeader(data) {
+                const pageTitle = document.querySelector('h2');
+                const pageSubtitle = document.querySelector('p.text-muted');
+                
+                if (pageTitle && pageSubtitle) {
+                    if (data.hasQuery) {
+                        pageTitle.innerHTML = '<i class="bi bi-search me-2"></i>Search Results';
+                        pageSubtitle.innerHTML = `Results for "<strong>${data.query}</strong>" (${data.count} ${data.count === 1 ? 'article' : 'articles'} found)`;
+                    } else {
+                        pageTitle.innerHTML = '<i class="bi bi-journal-text me-2"></i>All Articles';
+                        pageSubtitle.innerHTML = 'Discover and read articles from our community';
+                    }
+                }
+            }
+
+            // Function to show no results message
+            function showNoResultsMessage(query, hasQuery) {
+                const noResultsMessage = document.getElementById('noResultsMessage');
+                
+                if (noResultsMessage) {
+                    if (hasQuery) {
+                        noResultsMessage.innerHTML = `
+                            <i class="bi bi-search display-1 text-muted mb-3"></i>
+                            <h4>No articles found</h4>
+                            <p class="text-muted">No articles match your search for "<strong>${query}</strong>". Try adjusting your search terms.</p>
+                            <button class="btn btn-outline-primary" onclick="clearSearch()">
+                                <i class="bi bi-arrow-left me-2"></i>Show All Articles
+                            </button>
+                        `;
+                    } else {
+                        noResultsMessage.innerHTML = `
+                            <i class="bi bi-journal-text display-1 text-muted mb-3"></i>
+                            <h4>No articles available</h4>
+                            <p class="text-muted">No articles have been published yet.</p>
+                            <a href="/Articles/Create" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create First Article
+                            </a>
+                        `;
+                    }
+                    noResultsMessage.style.display = 'block';
+                }
+            }
+
+            // Function to clear search and show all articles
+            window.clearSearch = function() {
+                searchInput.value = '';
+                showAllArticles();
+            };
+
+            // Function to attach event listeners to new content
+            function attachEventListeners() {
+                // Re-attach clickable card listeners
+                document.querySelectorAll('.clickable-card').forEach(card => {
+                    card.addEventListener('click', function(e) {
+                        if (e.target.closest('.vote-btn') || e.target.closest('.read-more-btn')) {
+                            return;
+                        }
+                        const articleUrl = this.getAttribute('data-article-url');
+                        if (articleUrl) {
+                            window.location.href = articleUrl;
+                        }
+                    });
+                });
+
+                // Re-attach vote button listeners if on home page
+                const isHomePage = document.querySelector('.home-page');
+                if (isHomePage) {
+                    attachVoteListeners();
+                }
+            }
+
+            // Function to attach vote listeners (for home page)
+            function attachVoteListeners() {
+                document.querySelectorAll('.upvote').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.getAttribute('data-article-id');
+                        this.classList.add('active-up');
+                        const down = this.closest('.post-card')?.querySelector('.downvote');
+                        if (down) down.classList.remove('active-down');
+                        sendVote(id, true);
+                    });
+                });
+
+                document.querySelectorAll('.downvote').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.getAttribute('data-article-id');
+                        this.classList.add('active-down');
+                        const up = this.closest('.post-card')?.querySelector('.upvote');
+                        if (up) up.classList.remove('active-up');
+                        sendVote(id, false);
+                    });
+                });
+            }
+
+            // Vote function (for home page)
+            async function sendVote(articleId, isUpvote) {
+                try {
+                    const res = await fetch('/Votes/AjaxVote', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ articleId: parseInt(articleId), isUpvote: Boolean(isUpvote) })
+                    });
+                    if (res.ok) {
+                        const c = await fetch(`/Votes/Count?articleId=${articleId}`);
+                        if (c.ok) {
+                            const json = await c.json();
+                            const s = document.getElementById(`score-${articleId}`);
+                            if (s) s.textContent = (json && typeof json.netScore !== 'undefined') ? json.netScore : 0;
+                        }
+                    } else if (res.status === 401) {
+                        window.location.href = '/Identity/Account/Login';
+                    }
+                } catch (e) {
+                    // Silently handle vote errors
+                }
+            }
+
+            // Event listeners
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300); // Debounce search
+            });
+
+            searchButton.addEventListener('click', function() {
+                const query = searchInput.value.trim();
+                performSearch(query);
+            });
+
+            // Handle Enter key
+            searchInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const query = this.value.trim();
+                    performSearch(query);
+                }
+            });
+        });
+
+        // Clickable article cards functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.clickable-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Don't navigate if clicking on vote buttons or read more button
+                    if (e.target.closest('.vote-btn') || e.target.closest('.read-more-btn')) {
+                        return;
+                    }
+                    
+                    const articleUrl = this.getAttribute('data-article-url');
+                    if (articleUrl) {
+                        window.location.href = articleUrl;
+                    }
+                });
+            });
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                try {
+                    var c = document.getElementById('toasts');
+                    if (!c) return;
+                    var el = document.createElement('div');
+                    el.className = 'toast align-items-center text-bg-success border-0';
+                    el.role = 'status'; el.ariaLive = 'polite'; el.ariaAtomic = 'true';
+                    el.innerHTML = '<div class="d-flex"><div class="toast-body'>@TempData["SuccessMessage"]</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+                    c.appendChild(el);
+                    var t = new bootstrap.Toast(el, { delay: 2000 });
+                    t.show();
+                } catch (e) { }
+            });
+        </script>
+    }
+</body>
+</html>

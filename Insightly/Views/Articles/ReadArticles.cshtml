@@ -1,0 +1,164 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Saved Articles";
+}
+
+<div class="home-page container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Saved Articles</h1>
+        <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary">← Back to Home</a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="d-flex flex-column gap-3" id="readArticlesContainer">
+            @foreach (var item in Model)
+            {
+                var article = item.Article;
+                <div class="post-card d-flex article-item clickable-card"
+                     data-title="@article.Title.ToLower()"
+                     data-content="@article.Content.ToLower()"
+                     data-author="@article.Author.Name.ToLower()"
+                     data-article-url="/Articles/Details/@article.ArticleId">
+                    <div class="vote-col d-flex flex-column align-items-center justify-content-start py-2">
+                        <button class="btn btn-link p-0 vote-btn upvote" data-article-id="@article.ArticleId" aria-label="Upvote">
+                            <i class="bi bi-arrow-up-circle fs-4"></i>
+                        </button>
+                        <div class="score my-1" id="score-@article.ArticleId">0</div>
+                        <button class="btn btn-link p-0 vote-btn downvote" data-article-id="@article.ArticleId" aria-label="Downvote">
+                            <i class="bi bi-arrow-down-circle fs-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex-grow-1 p-3">
+                        <div class="d-flex align-items-center gap-2 mb-1 text-muted small">
+                            <span>Read by @article.Author.Name</span>
+                            <span>•</span>
+                            <span>@item.ReadAt.ToString("dd MMM h:mm tt")</span>
+                            <span class="chip ms-2">Read</span>
+                        </div>
+                        <h5 class="mb-2"><a class="text-decoration-none" href="/Articles/Details/@article.ArticleId">@article.Title</a></h5>
+                        <p class="mb-3 text-muted">
+                            @{
+                                var content = article.Content ?? string.Empty;
+                                var preview = content.Length > 180 ? content.Substring(0, 180) + "..." : content;
+                            }
+                            @preview
+                        </p>
+                        <div class="d-flex align-items-center justify-content-end">
+                            <a href="/Articles/Details/@article.ArticleId" class="btn btn-sm btn-outline-primary read-more-btn">Read more</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5" id="noResultsMessage">
+            <i class="bi bi-search display-1 text-muted mb-3"></i>
+            <h4>No read articles</h4>
+            <p class="text-muted">Start reading and marking articles as read</p>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-primary">Go to Home</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[id^="score-"]').forEach(async el => {
+    const id = el.id.replace('score-', '');
+    try {
+      const res = await fetch(`/Votes/Count?articleId=${id}`);
+      if (res.ok) {
+        const json = await res.json();
+        el.textContent = (json && typeof json.netScore !== 'undefined') ? json.netScore : 0;
+      }
+    } catch (e) {}
+  });
+
+  // Fetch user vote status for each article (avoid duplicates)
+  const processedArticles = new Set();
+  document.querySelectorAll('.vote-btn').forEach(async btn => {
+    const articleId = btn.getAttribute('data-article-id');
+    if (articleId && !processedArticles.has(articleId)) {
+      processedArticles.add(articleId);
+      try {
+        const res = await fetch(`/Votes/UserArticleVote?articleId=${articleId}`, {
+          method: 'GET',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.voted) {
+            const upvoteBtn = document.querySelector(`.upvote[data-article-id="${articleId}"]`);
+            const downvoteBtn = document.querySelector(`.downvote[data-article-id="${articleId}"]`);
+            if (json.isUpvote) {
+              if (upvoteBtn) upvoteBtn.classList.add('active-up');
+              if (downvoteBtn) downvoteBtn.classList.remove('active-down');
+            } else {
+              if (downvoteBtn) downvoteBtn.classList.add('active-down');
+              if (upvoteBtn) upvoteBtn.classList.remove('active-up');
+            }
+          } else {
+            // Remove any existing active classes if user hasn't voted
+            const upvoteBtn = document.querySelector(`.upvote[data-article-id="${articleId}"]`);
+            const downvoteBtn = document.querySelector(`.downvote[data-article-id="${articleId}"]`);
+            if (upvoteBtn) upvoteBtn.classList.remove('active-up');
+            if (downvoteBtn) downvoteBtn.classList.remove('active-down');
+          }
+        } else if (res.status === 401) {
+          console.log('User not authenticated for vote status check');
+        }
+      } catch (e) {
+        console.log('Error fetching vote status for article', articleId, e);
+      }
+    }
+  });
+
+  async function sendVote(articleId, isUpvote) {
+    try {
+      const res = await fetch('/Votes/AjaxVote', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ articleId: parseInt(articleId), isUpvote: Boolean(isUpvote) })
+      });
+      if (res.ok) {
+        const c = await fetch(`/Votes/Count?articleId=${articleId}`);
+        if (c.ok) {
+          const json = await c.json();
+          const s = document.getElementById(`score-${articleId}`);
+          if (s) s.textContent = (json && typeof json.netScore !== 'undefined') ? json.netScore : 0;
+        }
+      } else if (res.status === 401) {
+        window.location.href = '/Identity/Account/Login';
+      }
+    } catch (e) {}
+  }
+
+  document.querySelectorAll('.upvote').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-article-id');
+      btn.classList.add('active-up');
+      const down = btn.closest('.post-card')?.querySelector('.downvote');
+      if (down) down.classList.remove('active-down');
+      sendVote(id, true);
+    });
+  });
+  document.querySelectorAll('.downvote').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-article-id');
+      btn.classList.add('active-down');
+      const up = btn.closest('.post-card')?.querySelector('.upvote');
+      if (up) up.classList.remove('active-up');
+      sendVote(id, false);
+    });
+  });
+});
+</script>
+}
